@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Relationship Analyzer</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Background Mathematical Symbols -->
+    <div class="math-bg">
+        <span>R ⊆ A × A</span>
+        <span>(a,b)</span>
+        <span>R → R</span>
+        <span>{a,b,c}</span>
+        <span>∀x ∈ A</span>
+        <span>xRy</span>
+        <span>∑ R</span>
+        <span>A × A</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+
+        <div class="logo">
+            <div class="logo-symbol">R</div>
+            <div>
+                <h2>Relation<span>Lab</span></h2>
+                <small>Student Relationship Analyzer</small>
+            </div>
+        </div>
+
+        <div class="nav-status">
+            <span class="status-dot"></span>
+            Mathematical Relation System
+        </div>
+
+    </nav>
+
+
+    <!-- MAIN LANDING SECTION -->
+    <main class="landing">
+
+        <section class="hero">
+
+            <div class="hero-badge">
+                <span>✦</span>
+                DISCRETE MATHEMATICS PROJECT
+            </div>
+
+            <h1>
+                Student
+                <span>Relationship</span>
+                Analyzer
+            </h1>
+
+            <p class="hero-description">
+                Build your own student relation set and discover
+                whether the relation is Reflexive, Symmetric,
+                Antisymmetric or Transitive.
+            </p>
+
+            <div class="formula-card">
+
+                <div class="formula-main">
+                    R ⊆ A × A
+                </div>
+
+                <div class="formula-text">
+                    A relation R is a subset of the Cartesian product
+                    of a set A with itself.
+                </div>
+
+            </div>
+
+            <button class="start-btn" onclick="startAnalysis()">
+                <span>START ANALYSIS</span>
+                <strong>→</strong>
+            </button>
+
+            <div class="property-preview">
+
+                <div class="property-item">
+                    <div class="property-icon">↻</div>
+                    <div>
+                        <strong>Reflexive</strong>
+                        <small>Self Relations</small>
+                    </div>
+                </div>
+
+                <div class="property-item">
+                    <div class="property-icon">↔</div>
+                    <div>
+                        <strong>Symmetric</strong>
+                        <small>Reverse Relations</small>
+                    </div>
+                </div>
+
+                <div class="property-item">
+                    <div class="property-icon">≠</div>
+                    <div>
+                        <strong>Antisymmetric</strong>
+                        <small>Pair Checking</small>
+                    </div>
+                </div>
+
+                <div class="property-item">
+                    <div class="property-icon">→</div>
+                    <div>
+                        <strong>Transitive</strong>
+                        <small>Chain Relations</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- RIGHT SIDE VISUAL -->
+        <section class="visual-section">
+
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+
+            <div class="relation-visual">
+
+                <div class="node node-a">
+                    <span>A</span>
+                    <small>Student</small>
+                </div>
+
+                <div class="node node-b">
+                    <span>B</span>
+                    <small>Student</small>
+                </div>
+
+                <div class="node node-c">
+                    <span>C</span>
+                    <small>Student</small>
+                </div>
+
+                <div class="connection connection-ab"></div>
+                <div class="connection connection-bc"></div>
+
+                <div class="arrow arrow-ab">→</div>
+                <div class="arrow arrow-bc">→</div>
+
+                <div class="self-loop">↻</div>
+
+                <div class="center-label">
+                    <span>R</span>
+                    <small>RELATION</small>
+                </div>
+
+            </div>
+
+            <div class="floating-card card-top">
+                <span>ORDERED PAIR</span>
+                <strong>(A, B)</strong>
+            </div>
+
+            <div class="floating-card card-bottom">
+                <span>RELATION</span>
+                <strong>R ⊆ A × A</strong>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ANALYSIS AREA -->
+    <section id="analysisSection" class="analysis-section">
+
+        <div class="section-heading">
+
+            <div class="step-number">01</div>
+
+            <div>
+                <span class="section-label">RELATION LAB</span>
+                <h2>Create Your Student Set</h2>
+                <p>
+                    Enter any student names to begin building your
+                    mathematical relation.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="student-input-card">
+
+            <label for="studentName">
+                STUDENT NAME
+            </label>
+
+            <div class="input-row">
+
+                <input
+                    type="text"
+                    id="studentName"
+                    placeholder="Enter student name..."
+                    autocomplete="off"
+                >
+
+                <button onclick="addStudent()" class="add-btn">
+                    + ADD STUDENT
+                </button>
+
+            </div>
+
+            <div id="studentList" class="student-list">
+                <!-- Students will appear here -->
+            </div>
+
+            <button
+                id="continueBtn"
+                class="continue-btn"
+                onclick="continueToRelations()"
+                disabled
+            >
+                CONTINUE TO RELATION BUILDER →
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
