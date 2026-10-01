@@ -1,422 +1,313 @@
 let students = [];
+let relations = [];
 
-
-/* =========================================
-   START ANALYSIS
-   ========================================= */
+// ===============================
+// START ANALYSIS
+// ===============================
 
 function startAnalysis() {
-
     const section = document.getElementById("analysisSection");
 
-    section.scrollIntoView({
-        behavior: "smooth"
-    });
+    if (section) {
+        section.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
 
     setTimeout(() => {
-
         const input = document.getElementById("studentName");
-
-        if (input) {
-            input.focus();
-        }
-
-    }, 700);
+        if (input) input.focus();
+    }, 500);
 }
 
 
-/* =========================================
-   ADD STUDENT
-   ========================================= */
+// ===============================
+// ADD STUDENT
+// ===============================
 
 function addStudent() {
-
     const input = document.getElementById("studentName");
+
+    if (!input) return;
 
     const name = input.value.trim();
 
-    /* Empty name check */
-
     if (name === "") {
-
-        input.focus();
-
         showMessage("Please enter a student name.");
-
         return;
     }
 
-
-    /* Duplicate name check */
-
+    // Duplicate names are not allowed because A is a SET
     const alreadyExists = students.some(
         student => student.toLowerCase() === name.toLowerCase()
     );
 
-
     if (alreadyExists) {
-
-        showMessage("This student is already added.");
-
-        input.value = "";
-
+        showMessage("This student is already in the set.");
         input.focus();
-
         return;
     }
-
-
-    /* Add student */
 
     students.push(name);
 
     input.value = "";
 
-    input.focus();
-
     displayStudents();
-
     updateContinueButton();
+
+    input.focus();
 }
 
 
-/* =========================================
-   DISPLAY STUDENTS
-   ========================================= */
+// ===============================
+// DISPLAY STUDENTS
+// ===============================
 
 function displayStudents() {
-
     const list = document.getElementById("studentList");
+
+    if (!list) return;
 
     list.innerHTML = "";
 
-
     students.forEach((student, index) => {
-
         const chip = document.createElement("div");
 
         chip.className = "student-chip";
 
-
-        const name = document.createElement("span");
-
-        name.textContent = student;
-
-
-        const removeButton = document.createElement("button");
-
-        removeButton.className = "remove-student";
-
-        removeButton.innerHTML = "×";
-
-        removeButton.title = "Remove student";
-
-
-        removeButton.onclick = function () {
-
-            removeStudent(index);
-
-        };
-
-
-        chip.appendChild(name);
-
-        chip.appendChild(removeButton);
+        chip.innerHTML = `
+            <span>${escapeHTML(student)}</span>
+            <button onclick="removeStudent(${index})" title="Remove student">
+                ×
+            </button>
+        `;
 
         list.appendChild(chip);
-
     });
 }
 
 
-/* =========================================
-   REMOVE STUDENT
-   ========================================= */
+// ===============================
+// REMOVE STUDENT
+// ===============================
 
 function removeStudent(index) {
+    const removedStudent = students[index];
 
+    // Remove student
     students.splice(index, 1);
 
+    // Remove relations containing that student
+    relations = relations.filter(
+        pair =>
+            pair[0] !== removedStudent &&
+            pair[1] !== removedStudent
+    );
+
     displayStudents();
-
     updateContinueButton();
-}
 
+    // Rebuild relation section if it exists
+    const builder = document.getElementById("relationBuilder");
 
-/* =========================================
-   CONTINUE BUTTON
-   ========================================= */
+    if (builder) {
+        builder.remove();
 
-function updateContinueButton() {
-
-    const button = document.getElementById("continueBtn");
-
-    /*
-       Minimum 2 students required
-       because a relation needs ordered pairs.
-    */
-
-    if (students.length >= 2) {
-
-        button.disabled = false;
-
-    } else {
-
-        button.disabled = true;
-
+        if (students.length >= 1) {
+            createRelationBuilder();
+        }
     }
 }
 
 
-/* =========================================
-   CONTINUE TO RELATION BUILDER
-   ========================================= */
+// ===============================
+// CONTINUE BUTTON
+// ===============================
+
+function updateContinueButton() {
+    const button = document.getElementById("continueBtn");
+
+    if (!button) return;
+
+    // IMPORTANT:
+    // Only ONE student is enough
+    if (students.length >= 1) {
+        button.disabled = false;
+        button.classList.add("active");
+    } else {
+        button.disabled = true;
+        button.classList.remove("active");
+    }
+}
+
+
+// ===============================
+// CONTINUE TO RELATION BUILDER
+// ===============================
 
 function continueToRelations() {
 
-    if (students.length < 2) {
-
-        showMessage(
-            "Please add at least 2 students."
-        );
-
+    if (students.length < 1) {
+        showMessage("Please add at least one student.");
         return;
     }
 
-
-    /*
-       For now we create the next section
-       dynamically.
-    */
-
     createRelationBuilder();
-
 }
 
 
-/* =========================================
-   CREATE RELATION BUILDER
-   ========================================= */
+// ===============================
+// CREATE RELATION BUILDER
+// ===============================
 
 function createRelationBuilder() {
 
-    let oldSection =
-        document.getElementById("relationSection");
+    // Remove old builder if already present
+    const oldBuilder = document.getElementById("relationBuilder");
 
-
-    /* Prevent duplicate sections */
-
-    if (oldSection) {
-
-        oldSection.scrollIntoView({
-            behavior: "smooth"
-        });
-
-        return;
+    if (oldBuilder) {
+        oldBuilder.remove();
     }
-
 
     const section = document.createElement("section");
 
-    section.id = "relationSection";
-
-    section.className = "analysis-section";
-
+    section.id = "relationBuilder";
+    section.className = "analysis-section relation-builder";
 
     section.innerHTML = `
+        <div class="section-number">02</div>
 
         <div class="section-heading">
+            <span class="eyebrow">RELATION LAB</span>
 
-            <div class="step-number">
-                02
-            </div>
+            <h2>Build Relation R</h2>
 
-            <div>
-
-                <span class="section-label">
-                    RELATION LAB
-                </span>
-
-                <h2>
-                    Build Relation R
-                </h2>
-
-                <p>
-                    Select two students to create an
-                    ordered pair in relation R.
-                </p>
-
-            </div>
-
+            <p>
+                Select two students to create an ordered pair in relation R.
+            </p>
         </div>
 
+        <div class="relation-card">
 
-        <div class="student-input-card">
+            <div class="relation-select-row">
 
-            <div class="relation-form">
-
-                <div class="relation-field">
-
-                    <label>
-                        STUDENT A
-                    </label>
+                <div class="select-group">
+                    <label>STUDENT A</label>
 
                     <select id="studentA">
-
                         ${createStudentOptions()}
-
                     </select>
-
                 </div>
-
 
                 <div class="relation-arrow">
                     →
                 </div>
 
-
-                <div class="relation-field">
-
-                    <label>
-                        STUDENT B
-                    </label>
+                <div class="select-group">
+                    <label>STUDENT B</label>
 
                     <select id="studentB">
-
                         ${createStudentOptions()}
-
                     </select>
-
                 </div>
 
             </div>
 
-
-            <button
-                class="add-btn relation-add-btn"
-                onclick="addRelation()"
-            >
+            <button class="add-relation-btn" onclick="addRelation()">
                 + ADD RELATION
             </button>
 
+            <div class="current-relation">
 
-            <div class="relation-preview">
-
-                <div class="relation-title">
+                <div class="relation-label">
                     CURRENT RELATION R
                 </div>
 
-                <div id="relationPairs">
-
+                <div id="relationList">
                     <div class="empty-relation">
                         No ordered pairs added yet.
                     </div>
-
                 </div>
 
             </div>
 
-
-            <button
-                class="continue-btn"
-                onclick="analyzeRelation()"
-            >
+            <button class="analyze-btn" onclick="analyzeRelation()">
                 ANALYZE RELATION R →
             </button>
 
         </div>
-
     `;
-
 
     document.body.appendChild(section);
 
-
     section.scrollIntoView({
-        behavior: "smooth"
+        behavior: "smooth",
+        block: "start"
     });
-}
-
-
-/* =========================================
-   CREATE STUDENT OPTIONS
-   ========================================= */
-
-function createStudentOptions() {
-
-    return students.map(student => {
-
-        return `
-            <option value="${escapeHTML(student)}">
-                ${escapeHTML(student)}
-            </option>
-        `;
-
-    }).join("");
-
-}
-
-
-/* =========================================
-   RELATION DATA
-   ========================================= */
-
-let relations = [];
-
-
-/* =========================================
-   ADD RELATION
-   ========================================= */
-
-function addRelation() {
-
-    const studentA =
-        document.getElementById("studentA").value;
-
-    const studentB =
-        document.getElementById("studentB").value;
-
-
-    const pairExists = relations.some(
-        pair =>
-            pair[0] === studentA &&
-            pair[1] === studentB
-    );
-
-
-    if (pairExists) {
-
-        showMessage(
-            "This ordered pair already exists."
-        );
-
-        return;
-    }
-
-
-    relations.push([
-        studentA,
-        studentB
-    ]);
-
 
     displayRelations();
 }
 
 
-/* =========================================
-   DISPLAY RELATIONS
-   ========================================= */
+// ===============================
+// CREATE STUDENT OPTIONS
+// ===============================
+
+function createStudentOptions() {
+
+    return students
+        .map(student => `
+            <option value="${escapeHTML(student)}">
+                ${escapeHTML(student)}
+            </option>
+        `)
+        .join("");
+}
+
+
+// ===============================
+// ADD RELATION
+// ===============================
+
+function addRelation() {
+
+    const studentA = document.getElementById("studentA");
+    const studentB = document.getElementById("studentB");
+
+    if (!studentA || !studentB) return;
+
+    const a = studentA.value;
+    const b = studentB.value;
+
+    const alreadyExists = relations.some(
+        pair => pair[0] === a && pair[1] === b
+    );
+
+    if (alreadyExists) {
+        showMessage(`(${a}, ${b}) is already in relation R.`);
+        return;
+    }
+
+    relations.push([a, b]);
+
+    displayRelations();
+}
+
+
+// ===============================
+// DISPLAY RELATIONS
+// ===============================
 
 function displayRelations() {
 
-    const container =
-        document.getElementById("relationPairs");
+    const list = document.getElementById("relationList");
 
+    if (!list) return;
 
     if (relations.length === 0) {
 
-        container.innerHTML = `
+        list.innerHTML = `
             <div class="empty-relation">
                 No ordered pairs added yet.
             </div>
@@ -425,44 +316,35 @@ function displayRelations() {
         return;
     }
 
-
-    container.innerHTML = "";
-
+    list.innerHTML = "";
 
     relations.forEach((pair, index) => {
 
-        const item =
-            document.createElement("div");
+        const item = document.createElement("div");
 
-        item.className = "relation-pair";
-
+        item.className = "relation-item";
 
         item.innerHTML = `
-
             <span>
-                (${escapeHTML(pair[0])},
-                ${escapeHTML(pair[1])})
+                (${escapeHTML(pair[0])}, ${escapeHTML(pair[1])})
             </span>
 
             <button
-                class="remove-student"
                 onclick="removeRelation(${index})"
+                title="Remove relation"
             >
                 ×
             </button>
-
         `;
 
-
-        container.appendChild(item);
-
+        list.appendChild(item);
     });
 }
 
 
-/* =========================================
-   REMOVE RELATION
-   ========================================= */
+// ===============================
+// REMOVE RELATION
+// ===============================
 
 function removeRelation(index) {
 
@@ -472,342 +354,170 @@ function removeRelation(index) {
 }
 
 
-/* =========================================
-   ANALYZE RELATION
-   ========================================= */
+// ===============================
+// ANALYZE RELATION
+// ===============================
 
 function analyzeRelation() {
 
-    if (relations.length === 0) {
-
-        showMessage(
-            "Please add at least one relation."
-        );
-
+    if (students.length === 0) {
+        showMessage("Please add at least one student.");
         return;
     }
 
-
-    createAnalysisResult();
-
-}
-
-
-/* =========================================
-   ANALYSIS RESULT
-   ========================================= */
-
-function createAnalysisResult() {
-
-    let oldResult =
-        document.getElementById("resultSection");
-
-
-    if (oldResult) {
-
-        oldResult.remove();
-
+    if (relations.length === 0) {
+        showMessage("Please add at least one ordered pair.");
+        return;
     }
 
+    const reflexive = checkReflexive();
+    const symmetric = checkSymmetric();
+    const antisymmetric = checkAntisymmetric();
+    const transitive = checkTransitive();
 
-    const reflexive =
-        checkReflexive();
+    const equivalence =
+        reflexive.result &&
+        symmetric.result &&
+        transitive.result;
 
-    const symmetric =
-        checkSymmetric();
-
-    const antisymmetric =
-        checkAntisymmetric();
-
-    const transitive =
-        checkTransitive();
-
-
-    const resultSection =
-        document.createElement("section");
-
-
-    resultSection.id =
-        "resultSection";
-
-
-    resultSection.className =
-        "analysis-section";
-
-
-    resultSection.innerHTML = `
-
-        <div class="section-heading">
-
-            <div class="step-number">
-                03
-            </div>
-
-            <div>
-
-                <span class="section-label">
-                    MATHEMATICAL ANALYSIS
-                </span>
-
-                <h2>
-                    Relation Properties
-                </h2>
-
-                <p>
-                    The relation has been analyzed
-                    mathematically.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="result-grid">
-
-            ${createPropertyCard(
-                "↻",
-                "REFLEXIVE",
-                reflexive.result,
-                reflexive.reason
-            )}
-
-
-            ${createPropertyCard(
-                "↔",
-                "SYMMETRIC",
-                symmetric.result,
-                symmetric.reason
-            )}
-
-
-            ${createPropertyCard(
-                "≠",
-                "ANTISYMMETRIC",
-                antisymmetric.result,
-                antisymmetric.reason
-            )}
-
-
-            ${createPropertyCard(
-                "→",
-                "TRANSITIVE",
-                transitive.result,
-                transitive.reason
-            )}
-
-        </div>
-
-
-        <div class="final-classification">
-
-            <div>
-
-                <span class="section-label">
-                    FINAL CLASSIFICATION
-                </span>
-
-                <h2>
-                    Equivalence Relation
-                </h2>
-
-                <p>
-                    A relation is an equivalence relation
-                    when it is Reflexive, Symmetric and
-                    Transitive.
-                </p>
-
-            </div>
-
-
-            <div class="
-                ${reflexive.result &&
-                  symmetric.result &&
-                  transitive.result
-                  ? "classification-yes"
-                  : "classification-no"}
-            ">
-
-                ${
-                    reflexive.result &&
-                    symmetric.result &&
-                    transitive.result
-                    ? "✓ YES"
-                    : "✕ NO"
-                }
-
-            </div>
-
-        </div>
-
-    `;
-
-
-    document.body.appendChild(
-        resultSection
+    createAnalysisResult(
+        reflexive,
+        symmetric,
+        antisymmetric,
+        transitive,
+        equivalence
     );
-
-
-    addResultStyles();
-
-
-    resultSection.scrollIntoView({
-        behavior: "smooth"
-    });
 }
 
 
-/* =========================================
-   REFLEXIVE CHECK
-   ========================================= */
+// ===============================
+// REFLEXIVE
+// ===============================
 
 function checkReflexive() {
 
-    let missing = [];
-
+    const missing = [];
 
     students.forEach(student => {
 
-        const exists =
-            relations.some(
-                pair =>
-                    pair[0] === student &&
-                    pair[1] === student
-            );
-
+        const exists = relations.some(
+            pair =>
+                pair[0] === student &&
+                pair[1] === student
+        );
 
         if (!exists) {
-
-            missing.push(
-                `(${student}, ${student})`
-            );
-
+            missing.push(student);
         }
-
     });
-
 
     if (missing.length === 0) {
 
         return {
             result: true,
-            reason: "Every student has a self-relation."
+            reason: "Every student has its self-pair.",
+            proof: "For every a ∈ A, (a,a) ∈ R."
         };
 
     }
 
-
     return {
-
         result: false,
+        reason: `Missing self-pair(s): ${missing
+            .map(name => `(${name}, ${name})`)
+            .join(", ")}`,
 
-        reason:
-            "Missing self-pairs: " +
-            missing.join(", ")
-
+        proof: "A reflexive relation must contain (a,a) for every student."
     };
-
 }
 
 
-/* =========================================
-   SYMMETRIC CHECK
-   ========================================= */
+// ===============================
+// SYMMETRIC
+// ===============================
 
 function checkSymmetric() {
 
     for (const pair of relations) {
 
-        const reverseExists =
-            relations.some(
-                other =>
-                    other[0] === pair[1] &&
-                    other[1] === pair[0]
-            );
+        const a = pair[0];
+        const b = pair[1];
 
+        const reverseExists = relations.some(
+            reverse =>
+                reverse[0] === b &&
+                reverse[1] === a
+        );
 
         if (!reverseExists) {
 
             return {
-
                 result: false,
 
                 reason:
-                    `(${pair[0]}, ${pair[1]}) exists but ` +
-                    `(${pair[1]}, ${pair[0]}) does not exist.`
+                    `(${a}, ${b}) exists, but (${b}, ${a}) is missing.`,
 
+                proof:
+                    "If (a,b) ∈ R, then (b,a) must also belong to R."
             };
-
         }
-
     }
 
-
     return {
-
         result: true,
-
-        reason:
-            "Every ordered pair has its reverse pair."
-
+        reason: "Every ordered pair has its reverse pair.",
+        proof: "If (a,b) ∈ R, then (b,a) ∈ R."
     };
-
 }
 
 
-/* =========================================
-   ANTISYMMETRIC CHECK
-   ========================================= */
+// ===============================
+// ANTISYMMETRIC
+// ===============================
 
 function checkAntisymmetric() {
 
     for (const pair of relations) {
 
-        if (pair[0] === pair[1]) {
+        const a = pair[0];
+        const b = pair[1];
+
+        if (a === b) {
             continue;
         }
 
-
-        const reverseExists =
-            relations.some(
-                other =>
-                    other[0] === pair[1] &&
-                    other[1] === pair[0]
-            );
-
+        const reverseExists = relations.some(
+            reverse =>
+                reverse[0] === b &&
+                reverse[1] === a
+        );
 
         if (reverseExists) {
 
             return {
-
                 result: false,
 
                 reason:
-                    `Both (${pair[0]}, ${pair[1]}) and ` +
-                    `(${pair[1]}, ${pair[0]}) exist.`
+                    `Both (${a}, ${b}) and (${b}, ${a}) exist.`,
 
+                proof:
+                    "For antisymmetry, if (a,b) and (b,a) are both in R, then a must equal b."
             };
-
         }
-
     }
 
-
     return {
-
         result: true,
-
-        reason:
-            "No distinct pair has its reverse."
-
+        reason: "No distinct pair has its reverse.",
+        proof:
+            "For distinct a and b, both (a,b) and (b,a) do not occur together."
     };
-
 }
 
 
-/* =========================================
-   TRANSITIVE CHECK
-   ========================================= */
+// ===============================
+// TRANSITIVE
+// ===============================
 
 function checkTransitive() {
 
@@ -815,457 +525,632 @@ function checkTransitive() {
 
         for (const second of relations) {
 
-            if (first[1] === second[0]) {
+            const a = first[0];
+            const b = first[1];
 
-                const requiredPair = [
-                    first[0],
-                    second[1]
-                ];
+            const b2 = second[0];
+            const c = second[1];
 
+            if (b === b2) {
 
-                const exists =
-                    relations.some(
-                        pair =>
-                            pair[0] === requiredPair[0] &&
-                            pair[1] === requiredPair[1]
-                    );
+                const requiredPairExists = relations.some(
+                    pair =>
+                        pair[0] === a &&
+                        pair[1] === c
+                );
 
-
-                if (!exists) {
+                if (!requiredPairExists) {
 
                     return {
-
                         result: false,
 
                         reason:
-                            `(${first[0]}, ${first[1]}) and ` +
-                            `(${second[0]}, ${second[1]}) exist, ` +
-                            `but (${requiredPair[0]}, ` +
-                            `${requiredPair[1]}) is missing.`
+                            `(${a}, ${b}) and (${b}, ${c}) exist, but (${a}, ${c}) is missing.`,
 
+                        proof:
+                            "If (a,b) ∈ R and (b,c) ∈ R, then (a,c) must also belong to R."
                     };
-
                 }
-
             }
-
         }
-
     }
 
-
     return {
-
         result: true,
-
-        reason:
-            "Every required transitive pair exists."
-
+        reason: "Every required transitive pair exists.",
+        proof:
+            "Whenever (a,b) and (b,c) are in R, (a,c) is also in R."
     };
-
 }
 
 
-/* =========================================
-   PROPERTY CARD
-   ========================================= */
+// ===============================
+// CREATE ANALYSIS RESULT
+// ===============================
 
-function createPropertyCard(
-    icon,
-    title,
-    result,
-    reason
+function createAnalysisResult(
+    reflexive,
+    symmetric,
+    antisymmetric,
+    transitive,
+    equivalence
 ) {
 
-    return `
+    const oldResult = document.getElementById("analysisResult");
 
-        <div class="
-            property-result-card
-            ${result ? "property-pass" : "property-fail"}
-        ">
+    if (oldResult) {
+        oldResult.remove();
+    }
 
-            <div class="result-icon">
-                ${icon}
-            </div>
+    const resultSection = document.createElement("section");
 
-            <div class="result-title">
-                ${title}
-            </div>
+    resultSection.id = "analysisResult";
+    resultSection.className = "analysis-result-section";
 
-            <div class="result-status">
-                ${result ? "✓ VERIFIED" : "✕ FAILED"}
-            </div>
+    resultSection.innerHTML = `
+
+        <div class="section-number">03</div>
+
+        <div class="section-heading">
+
+            <span class="eyebrow">
+                MATHEMATICAL ANALYSIS
+            </span>
+
+            <h2>
+                Relation Properties
+            </h2>
 
             <p>
-                ${reason}
+                The relation has been analyzed mathematically.
             </p>
 
         </div>
 
+        <div class="property-grid">
+
+            ${createPropertyCard(
+                "↻",
+                "REFLEXIVE",
+                reflexive,
+                "A reflexive relation must contain (a,a) for every student."
+            )}
+
+            ${createPropertyCard(
+                "↔",
+                "SYMMETRIC",
+                symmetric,
+                "If (a,b) ∈ R, then (b,a) ∈ R."
+            )}
+
+            ${createPropertyCard(
+                "≠",
+                "ANTISYMMETRIC",
+                antisymmetric,
+                "Distinct elements cannot contain both reverse pairs."
+            )}
+
+            ${createPropertyCard(
+                "→",
+                "TRANSITIVE",
+                transitive,
+                "If (a,b) and (b,c) exist, then (a,c) must exist."
+            )}
+
+        </div>
+
+        <div class="equivalence-card ${equivalence ? "verified" : "failed"}">
+
+            <div class="equivalence-icon">
+                ${equivalence ? "✓" : "!"}
+            </div>
+
+            <div>
+
+                <span class="eyebrow">
+                    FINAL CLASSIFICATION
+                </span>
+
+                <h3>
+                    ${
+                        equivalence
+                            ? "EQUIVALENCE RELATION"
+                            : "NOT AN EQUIVALENCE RELATION"
+                    }
+                </h3>
+
+                <p>
+                    ${
+                        equivalence
+                            ? "The relation is Reflexive, Symmetric and Transitive."
+                            : "An equivalence relation requires Reflexive + Symmetric + Transitive properties."
+                    }
+                </p>
+
+            </div>
+
+        </div>
+
+        <button class="new-analysis-btn" onclick="resetAnalysis()">
+            ↻ NEW ANALYSIS
+        </button>
     `;
 
+    document.body.appendChild(resultSection);
+
+    resultSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    addResultStyles();
 }
 
 
-/* =========================================
-   EXTRA RESULT STYLES
-   ========================================= */
+// ===============================
+// PROPERTY CARD
+// ===============================
 
-function addResultStyles() {
+function createPropertyCard(
+    icon,
+    title,
+    data,
+    definition
+) {
 
-    if (
-        document.getElementById(
-            "dynamicResultStyles"
-        )
-    ) {
-        return;
+    return `
+        <div class="property-card ${data.result ? "passed" : "failed"}">
+
+            <div class="property-icon">
+                ${icon}
+            </div>
+
+            <h3>
+                ${title}
+            </h3>
+
+            <div class="property-status">
+                ${
+                    data.result
+                        ? "✓ VERIFIED"
+                        : "✕ FAILED"
+                }
+            </div>
+
+            <p class="property-reason">
+                ${escapeHTML(data.reason)}
+            </p>
+
+            <p class="property-proof">
+                ${escapeHTML(data.proof)}
+            </p>
+
+            <p class="property-definition">
+                ${escapeHTML(definition)}
+            </p>
+
+        </div>
+    `;
+}
+
+
+// ===============================
+// RESET EVERYTHING
+// ===============================
+
+function resetAnalysis() {
+
+    students = [];
+    relations = [];
+
+    const builder = document.getElementById("relationBuilder");
+    const result = document.getElementById("analysisResult");
+
+    if (builder) builder.remove();
+    if (result) result.remove();
+
+    displayStudents();
+    updateContinueButton();
+
+    const input = document.getElementById("studentName");
+
+    if (input) {
+        input.value = "";
+        input.focus();
     }
 
+    const analysisSection = document.getElementById("analysisSection");
 
-    const style =
-        document.createElement("style");
-
-
-    style.id =
-        "dynamicResultStyles";
-
-
-    style.textContent = `
-
-        .relation-form {
-            display: flex;
-            align-items: flex-end;
-            gap: 20px;
-        }
-
-        .relation-field {
-            flex: 1;
-        }
-
-        .relation-field label {
-            display: block;
-            margin-bottom: 10px;
-            color: #8195aa;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-        }
-
-        .relation-field select {
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: #0b1a2b;
-            color: white;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .relation-arrow {
-            font-size: 28px;
-            color: #73d7ff;
-            padding-bottom: 9px;
-        }
-
-        .relation-add-btn {
-            margin-top: 25px;
-            padding: 14px 20px;
-        }
-
-        .relation-preview {
-            margin-top: 35px;
-            padding: 22px;
-            border-radius: 16px;
-            background: rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .relation-title {
-            color: #63ccff;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 15px;
-        }
-
-        .relation-pair {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            background: rgba(92,204,255,0.06);
-            border: 1px solid rgba(92,204,255,0.10);
-            color: #c7e5f2;
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 13px;
-        }
-
-        .empty-relation {
-            color: #607389;
-            font-size: 12px;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-
-        .property-result-card {
-            padding: 25px;
-            border-radius: 18px;
-            background: rgba(255,255,255,0.035);
-            border: 1px solid rgba(255,255,255,0.07);
-            transition: 0.3s ease;
-        }
-
-        .property-result-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .property-pass {
-            border-color: rgba(80,220,160,0.25);
-        }
-
-        .property-fail {
-            border-color: rgba(255,100,120,0.20);
-        }
-
-        .result-icon {
-            font-size: 26px;
-            color: #73d7ff;
-        }
-
-        .result-title {
-            margin-top: 12px;
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 17px;
-            font-weight: 700;
-        }
-
-        .result-status {
-            margin-top: 6px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .property-pass .result-status {
-            color: #5ee6a9;
-        }
-
-        .property-fail .result-status {
-            color: #ff7185;
-        }
-
-        .property-result-card p {
-            margin-top: 15px;
-            color: #778ba0;
-            font-size: 12px;
-            line-height: 1.7;
-        }
-
-        .final-classification {
-            margin-top: 20px;
-            padding: 30px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.035);
-            border: 1px solid rgba(255,255,255,0.08);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .final-classification h2 {
-            margin-top: 8px;
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 24px;
-        }
-
-        .final-classification p {
-            margin-top: 8px;
-            color: #71849a;
-            font-size: 12px;
-            max-width: 600px;
-            line-height: 1.6;
-        }
-
-        .classification-yes,
-        .classification-no {
-            min-width: 90px;
-            text-align: center;
-            padding: 13px 18px;
-            border-radius: 12px;
-            font-family: "Space Grotesk", sans-serif;
-            font-weight: 700;
-            font-size: 12px;
-        }
-
-        .classification-yes {
-            color: #5ee6a9;
-            background: rgba(80,220,160,0.08);
-            border: 1px solid rgba(80,220,160,0.18);
-        }
-
-        .classification-no {
-            color: #ff7185;
-            background: rgba(255,100,120,0.07);
-            border: 1px solid rgba(255,100,120,0.15);
-        }
-
-        @media (max-width: 650px) {
-
-            .relation-form {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .relation-arrow {
-                text-align: center;
-                transform: rotate(90deg);
-            }
-
-            .result-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .final-classification {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-        }
-
-    `;
-
-
-    document.head.appendChild(style);
+    if (analysisSection) {
+        analysisSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
 }
 
 
-/* =========================================
-   MESSAGE
-   ========================================= */
+// ===============================
+// MESSAGE
+// ===============================
 
 function showMessage(message) {
 
-    const oldMessage =
-        document.querySelector(".custom-message");
+    const oldMessage = document.querySelector(".custom-message");
 
     if (oldMessage) {
         oldMessage.remove();
     }
 
+    const box = document.createElement("div");
 
-    const box =
-        document.createElement("div");
+    box.className = "custom-message";
 
-
-    box.className =
-        "custom-message";
-
-
-    box.textContent =
-        message;
-
-
-    box.style.cssText = `
-
-        position: fixed;
-        top: 100px;
-        right: 25px;
-        z-index: 9999;
-
-        padding: 14px 18px;
-
-        border-radius: 12px;
-
-        background: #102238;
-
-        border: 1px solid rgba(100,200,255,0.25);
-
-        color: #bfe9ff;
-
-        font-size: 12px;
-
-        box-shadow: 0 15px 40px rgba(0,0,0,0.35);
-
-        animation: messageIn 0.25s ease;
-
+    box.innerHTML = `
+        <span>${escapeHTML(message)}</span>
+        <button onclick="this.parentElement.remove()">×</button>
     `;
-
 
     document.body.appendChild(box);
 
-
     setTimeout(() => {
 
-        box.style.opacity = "0";
-
-        box.style.transform =
-            "translateX(20px)";
-
-        box.style.transition =
-            "0.3s ease";
-
-        setTimeout(() => {
+        if (box.parentElement) {
             box.remove();
-        }, 300);
+        }
 
-    }, 2200);
+    }, 3000);
 }
 
 
-/* =========================================
-   ENTER KEY SUPPORT
-   ========================================= */
+// ===============================
+// ESCAPE HTML
+// ===============================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+function escapeHTML(text) {
 
-        const input =
-            document.getElementById("studentName");
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
 
 
-        if (input) {
+// ===============================
+// ENTER KEY
+// ===============================
 
-            input.addEventListener(
-                "keydown",
-                function (event) {
+document.addEventListener("keydown", function(event) {
 
-                    if (event.key === "Enter") {
+    if (event.key !== "Enter") return;
 
-                        event.preventDefault();
+    const input = document.getElementById("studentName");
 
-                        addStudent();
+    if (
+        document.activeElement === input &&
+        input &&
+        input.value.trim() !== ""
+    ) {
+        addStudent();
+    }
 
-                    }
+});
 
-                }
-            );
+
+// ===============================
+// EXTRA RESULT STYLES
+// ===============================
+
+function addResultStyles() {
+
+    if (document.getElementById("dynamicStyles")) return;
+
+    const style = document.createElement("style");
+
+    style.id = "dynamicStyles";
+
+    style.innerHTML = `
+
+        .relation-builder,
+        .analysis-result-section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 100px 8%;
+            position: relative;
+        }
+
+        .section-number {
+            color: #55d6ff;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .section-heading .eyebrow {
+            color: #55d6ff;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 3px;
+        }
+
+        .section-heading h2 {
+            font-size: clamp(42px, 6vw, 72px);
+            margin: 12px 0;
+            color: #f5f7ff;
+        }
+
+        .section-heading p {
+            color: #8192aa;
+            font-size: 18px;
+        }
+
+        .relation-card {
+            margin-top: 50px;
+            padding: 48px;
+            border-radius: 30px;
+            background: rgba(16, 29, 47, 0.85);
+            border: 1px solid rgba(120, 160, 200, 0.16);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+        }
+
+        .relation-select-row {
+            display: grid;
+            grid-template-columns: 1fr 80px 1fr;
+            gap: 24px;
+            align-items: end;
+        }
+
+        .select-group label {
+            display: block;
+            margin-bottom: 12px;
+            color: #7fcfff;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .select-group select {
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(120,160,200,0.18);
+            background: #0b1b2c;
+            color: white;
+            font-size: 17px;
+            outline: none;
+        }
+
+        .relation-arrow {
+            text-align: center;
+            color: #55d6ff;
+            font-size: 36px;
+        }
+
+        .add-relation-btn {
+            margin-top: 30px;
+            padding: 16px 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(85,214,255,0.35);
+            background: rgba(85,214,255,0.10);
+            color: #55d6ff;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .current-relation {
+            margin-top: 38px;
+            padding: 28px;
+            border-radius: 22px;
+            background: rgba(4,13,24,0.65);
+        }
+
+        .relation-label {
+            color: #55d6ff;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-bottom: 18px;
+        }
+
+        .relation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 17px 20px;
+            margin-top: 10px;
+            border-radius: 14px;
+            background: #13283b;
+            color: #eef5ff;
+            font-size: 17px;
+        }
+
+        .relation-item button {
+            border: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            color: #9eb0c5;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .empty-relation {
+            color: #72849b;
+            padding: 10px 0;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            margin-top: 30px;
+            padding: 20px;
+            border: 0;
+            border-radius: 18px;
+            background: linear-gradient(90deg,#55d6ff,#7468ff);
+            color: white;
+            font-weight: 900;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 22px;
+            margin-top: 45px;
+        }
+
+        .property-card {
+            padding: 35px;
+            border-radius: 26px;
+            background: rgba(17,31,50,0.88);
+            border: 1px solid rgba(100,150,190,0.18);
+        }
+
+        .property-card.passed {
+            border-color: rgba(50,220,160,0.30);
+        }
+
+        .property-card.failed {
+            border-color: rgba(255,90,110,0.30);
+        }
+
+        .property-icon {
+            font-size: 34px;
+            color: #55d6ff;
+            margin-bottom: 18px;
+        }
+
+        .property-card h3 {
+            color: #f5f7ff;
+            font-size: 24px;
+            margin: 0 0 12px;
+        }
+
+        .property-status {
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 22px;
+        }
+
+        .passed .property-status {
+            color: #4ee6ae;
+        }
+
+        .failed .property-status {
+            color: #ff6678;
+        }
+
+        .property-reason {
+            color: #a8b7c9;
+            font-size: 17px;
+            line-height: 1.6;
+        }
+
+        .property-proof,
+        .property-definition {
+            color: #71859d;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .equivalence-card {
+            margin-top: 25px;
+            padding: 32px;
+            border-radius: 25px;
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            background: rgba(15,29,47,0.9);
+        }
+
+        .equivalence-card.verified {
+            border: 1px solid rgba(60,230,170,0.35);
+        }
+
+        .equivalence-card.failed {
+            border: 1px solid rgba(255,100,120,0.35);
+        }
+
+        .equivalence-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            font-size: 30px;
+            background: rgba(85,214,255,0.10);
+            color: #55d6ff;
+        }
+
+        .equivalence-card h3 {
+            margin: 8px 0;
+            color: #f5f7ff;
+            font-size: 24px;
+        }
+
+        .equivalence-card p {
+            color: #8294aa;
+        }
+
+        .new-analysis-btn {
+            margin-top: 30px;
+            padding: 16px 25px;
+            border-radius: 14px;
+            border: 1px solid rgba(85,214,255,0.3);
+            background: rgba(85,214,255,0.08);
+            color: #55d6ff;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .custom-message {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            z-index: 9999;
+            padding: 16px 20px;
+            border-radius: 14px;
+            background: #13283b;
+            border: 1px solid rgba(85,214,255,0.3);
+            color: white;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .custom-message button {
+            border: 0;
+            background: transparent;
+            color: #9db0c5;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        @media(max-width:800px) {
+
+            .relation-select-row {
+                grid-template-columns: 1fr;
+            }
+
+            .relation-arrow {
+                transform: rotate(90deg);
+            }
+
+            .property-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .relation-card {
+                padding: 25px;
+            }
 
         }
 
-    }
-);
+    `;
 
-
-/* =========================================
-   HTML SAFETY
-   ========================================= */
-
-function escapeHTML(value) {
-
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
+    document.head.appendChild(style);
 }
